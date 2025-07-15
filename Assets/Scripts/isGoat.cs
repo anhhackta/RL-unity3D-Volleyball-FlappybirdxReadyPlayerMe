@@ -1,4 +1,4 @@
-using UnityEngine;
+/*using UnityEngine;
 
 public class GoalTrigger : MonoBehaviour
 {
@@ -15,4 +15,4 @@ public class GoalTrigger : MonoBehaviour
             }
         }
     }
-}
+}*/

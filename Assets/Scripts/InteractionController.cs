@@ -1,4 +1,4 @@
-using UnityEngine;
+/*using UnityEngine;
 
 public class InteractionController : MonoBehaviour
 {
@@ -71,4 +71,4 @@ public class InteractionController : MonoBehaviour
             gameModeController.HideGameModePanel();
         }
     }
-}
+}*/

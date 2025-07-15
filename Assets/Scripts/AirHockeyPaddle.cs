@@ -1,4 +1,4 @@
-using UnityEngine;
+/*using UnityEngine;
 
 public class AirHockeyPaddle : MonoBehaviour
 {
@@ -38,4 +38,4 @@ public class AirHockeyPaddle : MonoBehaviour
         pos.z = isPlayer1 ? Mathf.Clamp(pos.z, -0.614793f, 0f) : Mathf.Clamp(pos.z, 0f, 0.614793f);
         transform.position = pos;
     }
-}
+}*/
