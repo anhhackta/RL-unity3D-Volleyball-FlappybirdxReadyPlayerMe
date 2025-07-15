@@ -1,0 +1,21 @@
+{
+    "name": "GameAI.Scripts",
+    "rootNamespace": "",
+    "references": [
+        "Unity.TextMeshPro",
+        "UnityEngine.UI",
+        "Unity.MLAgents",
+        "Unity.MLAgents.Policies",
+        "ReadyPlayerMe.Core",
+        "ReadyPlayerMe.Samples.QuickStart"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
