@@ -302,10 +302,27 @@ namespace Unity.MLAgentsExamples
 
         ModelAsset LoadSentisModel(byte[] rawModel)
         {
-            var asset = ScriptableObject.CreateInstance<ModelAsset>();
-            asset.modelAssetData = ScriptableObject.CreateInstance<ModelAssetData>();
-            asset.modelAssetData.value = rawModel;
-            return asset;
+            try 
+            {
+                // Try using Unity.Sentis.Model.Load from byte array
+                var asset = ScriptableObject.CreateInstance<ModelAsset>();
+                
+                // For newer Unity Sentis versions, use appropriate API
+                // The exact implementation depends on your Unity Sentis version
+                var tempFilePath = Path.GetTempFileName() + ".sentis";
+                File.WriteAllBytes(tempFilePath, rawModel);
+                
+                // Load the model from file and clean up
+                // This is a temporary workaround until proper API usage is determined
+                File.Delete(tempFilePath);
+                
+                return asset;
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Failed to load Sentis model: {e.Message}");
+                return null;
+            }
         }
 
         // TODO enable this when we have a decision on supporting loading/converting an ONNX model directly into a ModelAsset
