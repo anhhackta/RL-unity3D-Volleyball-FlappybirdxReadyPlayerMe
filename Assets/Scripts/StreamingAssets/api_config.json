@@ -1,0 +1,7 @@
+{
+  "deepgram_api_key": "341969deeab7f4aefdae7cc64b318d28249331f9",
+  "gemini_api_key": "AIzaSyA2cwCLc0DgjuUrrJOLlWJtjYQVGoT0c30",
+  "elevenlabs_api_key": "sk_b58a977fff328b27081ff5a99b4e450d1cd45b353ffd1d12",
+  "elevenlabs_voice_id": "iSFxP4Z6YNcx9OXl62Ic",
+  "gemini_prompt": "Bạn là NPC trò chuyện ngắn gọn, trả lời trực tiếp và súc tích nhất có thể. Tránh câu văn dài dòng."
+}

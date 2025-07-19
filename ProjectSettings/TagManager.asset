@@ -7,6 +7,11 @@ TagManager:
   - Puck
   - Boundary
   - Goal
+  - wall
+  - blueGoal
+  - purpleGoal
+  - MidWall
+  - Paddle
   layers:
   - Default
   - TransparentFX
@@ -21,9 +26,9 @@ TagManager:
   - 
   - 
   - 
-  - 
-  - 
-  - 
+  - Player
+  - Puck
+  - MidWall
   - 
   - 
   - 
