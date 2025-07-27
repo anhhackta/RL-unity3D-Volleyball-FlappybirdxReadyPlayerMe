@@ -62,8 +62,12 @@ public class GeminiChatbot : MonoBehaviour
     public TMP_InputField inputField;
     public TMP_Text chatDisplayText;
     public Button sendButton;
-    public Toggle ttsToggle;
     public ScrollRect chatScrollRect;
+    
+    [Header("Manager References")]
+    public PromptConfigManager promptConfigManager;
+    public InputFieldManager inputFieldManager;
+    public ResizableChatPanel resizableChatPanel;
     
     [Header("Chat Settings")]
     public string botInstructions = "You are a helpful AI assistant. Keep responses concise and friendly.";
@@ -71,6 +75,7 @@ public class GeminiChatbot : MonoBehaviour
     
     [Header("TTS Settings")]
     public ElevenLabsTTS.VoiceID selectedVoice = ElevenLabsTTS.VoiceID.BUPPIX;
+    public bool ttsEnabled = true; // Thay thế toggle bằng bool
     
     // Private variables
     private string geminiApiKey = "";
@@ -128,6 +133,20 @@ public class GeminiChatbot : MonoBehaviour
             inputField.onSubmit.AddListener((text) => SendMessage());
         }
         
+        // Setup managers if not assigned
+        if (promptConfigManager == null)
+            promptConfigManager = FindFirstObjectByType<PromptConfigManager>();
+        if (inputFieldManager == null)
+            inputFieldManager = FindFirstObjectByType<InputFieldManager>();
+        if (resizableChatPanel == null)
+            resizableChatPanel = FindFirstObjectByType<ResizableChatPanel>();
+        
+        // Subscribe to prompt config changes
+        if (promptConfigManager != null)
+        {
+            promptConfigManager.OnPromptConfigChanged += OnPromptConfigChanged;
+        }
+        
         // Add welcome message
         AddMessageToChat("AI Assistant", "Hello! I'm your AI assistant. How can I help you today?", true);
     }
@@ -177,7 +196,7 @@ public class GeminiChatbot : MonoBehaviour
         {
             parts = new ChatbotTextPart[]
             {
-                new ChatbotTextPart { text = botInstructions }
+                new ChatbotTextPart { text = GetSystemInstruction() }
             }
         }; 
 
@@ -238,7 +257,7 @@ public class GeminiChatbot : MonoBehaviour
                     AddMessageToChat("AI Assistant", reply, true);
                     
                     // Text-to-speech if enabled
-                    if (ttsToggle != null && ttsToggle.isOn)
+                    if (ttsEnabled)
                     {
                         StartCoroutine(PlayTextToSpeech(reply));
                     }
@@ -333,6 +352,41 @@ public class GeminiChatbot : MonoBehaviour
         {
             Canvas.ForceUpdateCanvases();
             chatScrollRect.verticalNormalizedPosition = 0f;
+        }
+    }
+    
+    private void OnPromptConfigChanged(PromptConfig newConfig)
+    {
+        Debug.Log("Prompt configuration updated");
+        // The system instruction will be updated automatically on next message
+    }
+    
+    private string GetSystemInstruction()
+    {
+        if (promptConfigManager != null)
+        {
+            return promptConfigManager.BuildSystemInstruction();
+        }
+        return botInstructions;
+    }
+    
+    public void SetTtsEnabled(bool enabled)
+    {
+        ttsEnabled = enabled;
+        Debug.Log($"TTS set to: {(enabled ? "enabled" : "disabled")}");
+    }
+    
+    public bool IsTtsEnabled()
+    {
+        return ttsEnabled;
+    }
+    
+    void OnDestroy()
+    {
+        // Unsubscribe from events
+        if (promptConfigManager != null)
+        {
+            promptConfigManager.OnPromptConfigChanged -= OnPromptConfigChanged;
         }
     }
 }

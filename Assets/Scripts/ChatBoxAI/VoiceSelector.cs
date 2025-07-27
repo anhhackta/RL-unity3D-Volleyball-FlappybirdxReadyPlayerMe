@@ -7,13 +7,32 @@ public class VoiceSelector : MonoBehaviour
     [Header("UI References")]
     public TMP_Dropdown voiceDropdown;
     public GeminiChatbot chatbot;
+    public Button ttsButton; // Button thay thế toggle TTS
+    
+    [Header("TTS Button Settings")]
+    public Sprite ttsOnSprite;  // Mic bật
+    public Sprite ttsOffSprite; // Mic tắt
+    
+    private bool isTtsEnabled = true;
+    private Image ttsButtonImage;
     
     void Start()
     {
         SetupVoiceDropdown();
+        SetupTtsButton();
             
         if (voiceDropdown != null)
             voiceDropdown.onValueChanged.AddListener(OnVoiceChanged);
+    }
+    
+    void SetupTtsButton()
+    {
+        if (ttsButton != null)
+        {
+            ttsButtonImage = ttsButton.GetComponent<Image>();
+            ttsButton.onClick.AddListener(ToggleTts);
+            UpdateTtsButtonSprite();
+        }
     }
     
     void SetupVoiceDropdown()
@@ -49,6 +68,44 @@ public class VoiceSelector : MonoBehaviour
         if (chatbot != null)
         {
             chatbot.ChangeVoice(voiceIndex);
+        }
+    }
+    
+    public void ToggleTts()
+    {
+        isTtsEnabled = !isTtsEnabled;
+        UpdateTtsButtonSprite();
+        
+        // Cập nhật TTS state trong chatbot
+        if (chatbot != null)
+        {
+            chatbot.SetTtsEnabled(isTtsEnabled);
+        }
+        
+        Debug.Log($"TTS {(isTtsEnabled ? "ON" : "OFF")}");
+    }
+    
+    private void UpdateTtsButtonSprite()
+    {
+        if (ttsButtonImage != null)
+        {
+            ttsButtonImage.sprite = isTtsEnabled ? ttsOnSprite : ttsOffSprite;
+        }
+    }
+    
+    public bool IsTtsEnabled()
+    {
+        return isTtsEnabled;
+    }
+    
+    public void SetTtsState(bool state)
+    {
+        isTtsEnabled = state;
+        UpdateTtsButtonSprite();
+        
+        if (chatbot != null)
+        {
+            chatbot.SetTtsEnabled(isTtsEnabled);
         }
     }
 }

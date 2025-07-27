@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections;
 
 public class ChatHistoryDisplay : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
@@ -15,13 +16,21 @@ public class ChatHistoryDisplay : MonoBehaviour, IPointerEnterHandler, IPointerE
     public Color normalTextColor = Color.white;
     public Color hoverTextColor = Color.yellow;
     
+    [Header("Auto Scroll Settings")]
+    public bool autoScrollToBottom = true;
+    public float autoScrollDelay = 0.1f;
+    
     private bool isHovering = false;
     private float originalScrollPosition;
+    private Coroutine autoScrollCoroutine;
     
     void Start()
     {
         if (chatText == null)
             chatText = GetComponent<TMP_Text>();
+            
+        if (scrollRect == null)
+            scrollRect = GetComponentInParent<ScrollRect>();
     }
     
     void Update()
@@ -72,7 +81,54 @@ public class ChatHistoryDisplay : MonoBehaviour, IPointerEnterHandler, IPointerE
     {
         if (scrollRect != null)
         {
+            if (autoScrollCoroutine != null)
+            {
+                StopCoroutine(autoScrollCoroutine);
+            }
+            autoScrollCoroutine = StartCoroutine(SmoothScrollToBottom());
+        }
+    }
+    
+    private IEnumerator SmoothScrollToBottom()
+    {
+        yield return new WaitForEndOfFrame();
+        Canvas.ForceUpdateCanvases();
+        yield return new WaitForSeconds(autoScrollDelay);
+        
+        if (scrollRect != null)
+        {
             scrollRect.verticalNormalizedPosition = 0f;
         }
+    }
+    
+    public void UpdateChatText(string newText)
+    {
+        if (chatText != null)
+        {
+            chatText.text = newText;
+            
+            if (autoScrollToBottom)
+            {
+                ScrollToBottom();
+            }
+        }
+    }
+    
+    public void AppendChatText(string additionalText)
+    {
+        if (chatText != null)
+        {
+            chatText.text += additionalText;
+            
+            if (autoScrollToBottom)
+            {
+                ScrollToBottom();
+            }
+        }
+    }
+    
+    public void SetAutoScroll(bool enabled)
+    {
+        autoScrollToBottom = enabled;
     }
 }

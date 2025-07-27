@@ -41,8 +41,10 @@ public class ElevenLabsTTS : MonoBehaviour
     public class TTSRequest
     {
         public string text;
-        public string model_id = "eleven_flash_v2_5";
+        public string model_id = "eleven_flash_v2_5"; // Faster model
         public VoiceSettings voice_settings;
+        public int optimize_streaming_latency = 4; // Optimize for low latency
+        public string output_format = "mp3_22050_32"; // Lower quality for faster processing
     }
 
     [System.Serializable]

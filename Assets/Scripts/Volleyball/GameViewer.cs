@@ -16,6 +16,10 @@ public class GameViewer : MonoBehaviour
     public GameObject pauseMenuUI;
     public GameObject gameUI;
     
+    [Header("Game Mode")]
+    public GameObject gameModeManagerObject;
+    public KeyCode gameModeKey = KeyCode.M;
+    
     private int currentCameraIndex = 0;
     private bool isPaused = false;
     
@@ -47,6 +51,12 @@ public class GameViewer : MonoBehaviour
         if (Input.GetKeyDown(pauseKey))
         {
             TogglePause();
+        }
+        
+        // Game Mode selection
+        if (Input.GetKeyDown(gameModeKey))
+        {
+            ShowGameModeSelection();
         }
         
         // Exit
@@ -112,6 +122,19 @@ public class GameViewer : MonoBehaviour
         Time.timeScale = 1f;
         SceneManager.LoadScene(mainMenuSceneName);
         Debug.Log("Đã thoát về menu chính");
+    }
+    
+    void ShowGameModeSelection()
+    {
+        if (gameModeManagerObject != null)
+        {
+            // Send message để tránh type reference issue
+            gameModeManagerObject.SendMessage("ShowGameModePanel", SendMessageOptions.DontRequireReceiver);
+        }
+        else
+        {
+            Debug.LogWarning("GameModeManager GameObject chưa được gán!");
+        }
     }
     
     // Public methods for UI buttons
