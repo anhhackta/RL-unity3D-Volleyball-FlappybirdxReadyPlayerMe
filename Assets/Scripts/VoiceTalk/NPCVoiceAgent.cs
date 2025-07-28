@@ -27,7 +27,7 @@ public class NPCVoiceAgent : MonoBehaviour
     private bool isRecording = false;
     private string recordedFilePath;
     private AudioClip recordingClip;
-    private int sampleRate = 16000;
+    private int sampleRate = 8000;
 
     void Start()
     {
@@ -89,26 +89,50 @@ public class NPCVoiceAgent : MonoBehaviour
 
     IEnumerator ProcessVoice(string audioPath)
     {
+        Debug.Log("🎤 Bắt đầu xử lý voice...");
+        
+        // Bước 1: Speech-to-Text
+        Debug.Log("🔄 Đang gửi đến Deepgram STT...");
         string sttText = null;
         yield return SendToDeepgram(audioPath, result => sttText = result);
 
         if (!string.IsNullOrEmpty(sttText))
         {
-            Debug.Log("STT: " + sttText);
+            Debug.Log("✅ STT hoàn thành: " + sttText);
 
+            // Bước 2: AI Response  
+            Debug.Log("🤖 Đang gửi đến Gemini AI...");
             string aiResponse = null;
             yield return SendToGemini(sttText, result => aiResponse = result);
 
-            Debug.Log("Gemini: " + aiResponse);
-
-            yield return SendToElevenLabs(aiResponse);
+            if (!string.IsNullOrEmpty(aiResponse))
+            {
+                Debug.Log("✅ Gemini response: " + aiResponse);
+                
+                // Bước 3: Text-to-Speech
+                Debug.Log("🔊 Đang tạo audio với ElevenLabs...");
+                yield return SendToElevenLabs(aiResponse);
+            }
+            else
+            {
+                Debug.LogError("❌ Gemini không trả về response!");
+            }
         }
+        else
+        {
+            Debug.LogError("❌ STT không nhận diện được text!");
+        }
+        
+        Debug.Log("🎯 Hoàn thành xử lý voice!");
     }
 
     IEnumerator SendToDeepgram(string audioPath, Action<string> callback)
     {
-        string url = "https://api.deepgram.com/v1/listen?model=whisper-large";
+        Debug.Log("📡 Bắt đầu gửi audio đến Deepgram...");
+        // Thêm language=vi để nhận diện tiếng Việt
+        string url = "https://api.deepgram.com/v1/listen?model=nova-2-general&language=vi&smart_format=true";
         byte[] audioData = File.ReadAllBytes(audioPath);
+        Debug.Log($"📂 Audio file size: {audioData.Length} bytes");
 
         UnityWebRequest www = new UnityWebRequest(url, "POST");
         www.uploadHandler = new UploadHandlerRaw(audioData);
@@ -116,17 +140,23 @@ public class NPCVoiceAgent : MonoBehaviour
         www.SetRequestHeader("Content-Type", "audio/wav");
         www.SetRequestHeader("Authorization", "Token " + config.deepgram_api_key);
 
+        float startTime = Time.time;
         yield return www.SendWebRequest();
+        float duration = Time.time - startTime;
 
         if (www.result == UnityWebRequest.Result.Success)
         {
+            Debug.Log($"✅ Deepgram response trong {duration:F2}s");
             string json = www.downloadHandler.text;
+            Debug.Log("📋 Raw JSON response: " + json); // Debug để xem response
             string transcript = ParseDeepgramResponse(json);
+            Debug.Log("📝 Extracted transcript: '" + transcript + "'");
             callback(transcript);
         }
         else
         {
-            Debug.LogError("Deepgram Error: " + www.error);
+            Debug.LogError("❌ Deepgram Error: " + www.error);
+            Debug.LogError("Response: " + www.downloadHandler.text);
         }
     }
 
@@ -143,7 +173,9 @@ public class NPCVoiceAgent : MonoBehaviour
 
     IEnumerator SendToGemini(string userText, Action<string> callback)
     {
-        string url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-2.5:generateContent?key={config.gemini_api_key}";
+        Debug.Log("🧠 Bắt đầu gửi đến Gemini AI...");
+        // Sử dụng model đúng: gemini-1.5-flash hoặc gemini-1.5-pro
+        string url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={config.gemini_api_key}";
 
         string prompt = config.gemini_prompt + "\nNgười chơi hỏi: " + userText;
         string jsonBody = "{\"contents\":[{\"parts\":[{\"text\":\"" + prompt + "\"}]}]}";
@@ -154,32 +186,78 @@ public class NPCVoiceAgent : MonoBehaviour
         www.downloadHandler = new DownloadHandlerBuffer();
         www.SetRequestHeader("Content-Type", "application/json");
 
+        float startTime = Time.time;
         yield return www.SendWebRequest();
+        float duration = Time.time - startTime;
 
         if (www.result == UnityWebRequest.Result.Success)
         {
+            Debug.Log($"✅ Gemini response trong {duration:F2}s");
             callback(ParseGeminiResponse(www.downloadHandler.text));
         }
         else
         {
-            Debug.LogError("Gemini Error: " + www.error);
+            Debug.LogError("❌ Gemini Error: " + www.error);
+            Debug.LogError("Response: " + www.downloadHandler.text);
         }
     }
 
     string ParseGeminiResponse(string json)
     {
-        // Parse cơ bản (Gemini trả JSON phức tạp)
-        if (json.Contains("\"text\":"))
+        Debug.Log("🔍 Parsing Gemini JSON: " + json); // Debug để xem raw response
+        
+        try
         {
-            int start = json.IndexOf("\"text\":") + 8;
-            int end = json.IndexOf("\"", start);
-            return json.Substring(start, end - start);
+            // Cách 1: Parse JSON structure đúng cách cho format mới
+            if (json.Contains("\"text\":"))
+            {
+                // Tìm "text" field và extract content
+                int textStart = json.IndexOf("\"text\":");
+                if (textStart != -1)
+                {
+                    // Tìm dấu " đầu tiên sau "text":
+                    int quoteStart = json.IndexOf("\"", textStart + 7) + 1;
+                    
+                    // Tìm dấu " kết thúc (có thể có escape characters)
+                    int quoteEnd = quoteStart;
+                    while (quoteEnd < json.Length)
+                    {
+                        if (json[quoteEnd] == '"' && (quoteEnd == 0 || json[quoteEnd - 1] != '\\'))
+                        {
+                            break;
+                        }
+                        quoteEnd++;
+                    }
+                    
+                    if (quoteStart > 0 && quoteEnd > quoteStart)
+                    {
+                        string result = json.Substring(quoteStart, quoteEnd - quoteStart);
+                        // Xử lý escape characters
+                        result = result.Replace("\\n", "\n").Replace("\\\"", "\"").Replace("\\\\", "\\");
+                        // Loại bỏ \n cuối nếu có
+                        result = result.TrimEnd('\n');
+                        
+                        Debug.Log("✅ Extracted text: '" + result + "'");
+                        return result;
+                    }
+                }
+            }
+            
+            // Fallback - không tìm thấy text
+            Debug.LogWarning("⚠️ Không tìm thấy text field hợp lệ");
+            return "";
         }
-        return json;
+        catch (System.Exception e)
+        {
+            Debug.LogError("❌ Lỗi parse JSON: " + e.Message);
+            Debug.LogError("JSON content: " + json);
+            return "";
+        }
     }
 
     IEnumerator SendToElevenLabs(string text)
     {
+        Debug.Log("🎵 Bắt đầu tạo voice với ElevenLabs...");
         string url = $"https://api.elevenlabs.io/v1/text-to-speech/{config.elevenlabs_voice_id}?optimize_streaming_latency=4&model_id=eleven_flash_v2_5";
         string jsonBody = "{\"text\":\"" + text + "\"}";
 
@@ -189,36 +267,60 @@ public class NPCVoiceAgent : MonoBehaviour
         www.SetRequestHeader("Content-Type", "application/json");
         www.SetRequestHeader("xi-api-key", config.elevenlabs_api_key);
 
+        float startTime = Time.time;
         yield return www.SendWebRequest();
+        float duration = Time.time - startTime;
 
         if (www.result == UnityWebRequest.Result.Success)
         {
+            Debug.Log($"✅ ElevenLabs response trong {duration:F2}s");
             byte[] audioData = www.downloadHandler.data;
+            Debug.Log($"🎧 Audio data size: {audioData.Length} bytes");
+            
             string tempFile = Path.Combine(Application.persistentDataPath, "npc_response.mp3");
             File.WriteAllBytes(tempFile, audioData);
+            Debug.Log("💾 Đã lưu audio file: " + tempFile);
+            
             StartCoroutine(PlayAudio(tempFile));
         }
         else
         {
-            Debug.LogError("ElevenLabs Error: " + www.error);
+            Debug.LogError("❌ ElevenLabs Error: " + www.error);
+            Debug.LogError("Response: " + www.downloadHandler.text);
         }
     }
 
     IEnumerator PlayAudio(string path)
     {
+        Debug.Log("🎵 Bắt đầu phát audio: " + path);
+        
         using (UnityWebRequest www = UnityWebRequestMultimedia.GetAudioClip("file://" + path, AudioType.MPEG))
         {
             yield return www.SendWebRequest();
 
             if (www.result == UnityWebRequest.Result.Success)
             {
+                Debug.Log("✅ Audio loaded thành công!");
                 AudioClip clip = DownloadHandlerAudioClip.GetContent(www);
                 npcAudioSource.clip = clip;
                 npcAudioSource.Play();
+                Debug.Log("🔊 Đang phát audio...");
             }
             else
             {
-                Debug.LogError(www.error);
+                Debug.LogError("❌ Lỗi load audio: " + www.error);
+                Debug.LogError("File path: " + path);
+                
+                // Kiểm tra file có tồn tại không
+                if (File.Exists(path))
+                {
+                    FileInfo fileInfo = new FileInfo(path);
+                    Debug.Log($"File tồn tại, size: {fileInfo.Length} bytes");
+                }
+                else
+                {
+                    Debug.LogError("File không tồn tại!");
+                }
             }
         }
     }

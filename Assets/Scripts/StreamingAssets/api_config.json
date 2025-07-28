@@ -1,7 +1,7 @@
 {
-  "deepgram_api_key": "341969deeab7f4aefdae7cc64b318d28249331f9",
-  "gemini_api_key": "AIzaSyA2cwCLc0DgjuUrrJOLlWJtjYQVGoT0c30",
-  "elevenlabs_api_key": "sk_b58a977fff328b27081ff5a99b4e450d1cd45b353ffd1d12",
-  "elevenlabs_voice_id": "iSFxP4Z6YNcx9OXl62Ic",
+  "deepgram_api_key": "b44f7b386815bc57c79e3c4b42972ec1ef3b5ad2",
+  "gemini_api_key": "AIzaSyA8u2f4hMV5mZ3S40uoh0mSTsIXiVVqeqY",
+  "elevenlabs_api_key": "sk_b01f7fefe89e9efc3f2acb1dbc5f84c5c32d1b6ffc4c3d96",
+  "elevenlabs_voice_id": "RmcV9cAq1TByxNSgbii7",
   "gemini_prompt": "Bạn là NPC trò chuyện ngắn gọn, trả lời trực tiếp và súc tích nhất có thể. Tránh câu văn dài dòng."
 }
